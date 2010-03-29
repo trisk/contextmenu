@@ -35,12 +35,15 @@ class contextmenu extends rcube_plugin
 		$imap = rcmail::get_instance()->imap;
 		$mbox = get_input_value('_mbox', RCUBE_INPUT_GET);
 
-		$uids = $imap->search($mbox, 'ALL UNSEEN', RCMAIL_CHARSET);
+		$index = $imap->search($mbox, 'ALL UNSEEN', RCMAIL_CHARSET);
 
-		if (!is_array($uids))
+		if (!is_array($index))
 			return false;
 
 		// ID to UID
+		$uids = is_array($index['depth']) ?
+			array_keys($index['depth']) : $index;
+
 		foreach($uids as $key => $val)
 			$uids[$key] = $imap->get_uid($val, $mbox);
 
