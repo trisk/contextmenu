@@ -5,7 +5,7 @@
  *
  * Plugin to add a context menu to the message list
  *
- * @version 1.4
+ * @version 1.5
  * @author Philip Weir
  */
 class contextmenu extends rcube_plugin
@@ -24,13 +24,15 @@ class contextmenu extends rcube_plugin
 		$this->register_action('plugin.contextmenu.readfolder', array($this, 'readfolder'));
 	}
 
-	public function messagecount() {
+	public function messagecount()
+	{
 		$mbox = get_input_value('_mbox', RCUBE_INPUT_GET);
 		$this->api->output->set_env('messagecount', rcmail::get_instance()->imap->messagecount($mbox));
 		$this->api->output->send();
 	}
 
-	public function readfolder() {
+	public function readfolder()
+	{
 		$imap = rcmail::get_instance()->imap;
 		$cbox = get_input_value('_cur', RCUBE_INPUT_GET);
 		$mbox = get_input_value('_mbox', RCUBE_INPUT_GET);
@@ -148,7 +150,8 @@ class contextmenu extends rcube_plugin
 	}
 
 	// based on rcmail_render_folder_tree_html()
-	private function _gen_folder_list($arrFolders, $command, $nestLevel = 0, &$folderTotal = 0) {
+	private function _gen_folder_list($arrFolders, $command, $nestLevel = 0, &$folderTotal = 0)
+	{
 		$rcmail = rcmail::get_instance();
 
 		$maxlength = 35;
@@ -219,10 +222,12 @@ class contextmenu extends rcube_plugin
 	}
 
 	// based on rcmail_directory_list()
-	private function _gen_addressbooks_list($arrBooks, $command) {
+	private function _gen_addressbooks_list($arrBooks, $command)
+	{
 		$rcmail = rcmail::get_instance();
 		$groupTotal = 0;
 		$maxlength = 35;
+		$maxlength_grp = 33;
 		$out = '';
 
 		// address books
@@ -242,25 +247,21 @@ class contextmenu extends rcube_plugin
 			}
 
 			if ($source['readonly'])
-				$out .= html::tag('li', array('class' => 'addressbook disabled'), html::a(array('href' => $command, 'id' => 'rcm_contextgrps_'. JQ($id), 'onclick' => "rcm_set_dest_book('" . JQ($id) ."')", 'class' => 'active', 'title' => $title), Q($bookname)));
+				$out .= html::tag('li', array('id' => 'rcm_contextaddr_' . $id, 'class' => 'addressbook disabled'), html::a(array('href' => $command, 'id' => 'rcm_contextgrps_'. JQ($id), 'onclick' => "rcm_set_dest_book('" . JQ($id) ."', '" . JQ($id) ."', null)", 'class' => 'active', 'title' => $title), Q($bookname)));
 			else
-				$out .= html::tag('li', array('class' => 'addressbook'), html::a(array('href' => $command, 'id' => 'rcm_contextgrps_'. JQ($id), 'onclick' => "rcm_set_dest_book('" . JQ($id) ."')", 'class' => 'active', 'title' => $title), Q($bookname)));
+				$out .= html::tag('li', array('id' => 'rcm_contextaddr_' . $id, 'class' => 'addressbook'), html::a(array('href' => $command, 'id' => 'rcm_contextgrps_'. JQ($id), 'onclick' => "rcm_set_dest_book('" . JQ($id) ."', '" . JQ($id) ."', null)", 'class' => 'active', 'title' => $title), Q($bookname)));
 
-			$groupTotal++;
-		}
-
-		// contact groups
-		foreach ($arrBooks as $j => $source) {
+			// contact groups
 			if ($source['groups']) {
 				$groups = $rcmail->get_address_book($source['id'])->list_groups();
 				foreach ($groups as $group) {
 					$title = null;
-					$id = 'G' . $group['ID'];
-					$groupname = !empty($group['name']) ? Q($group['name']) : Q($id);
+					$gid = 'G' . $id . $group['ID'];
+					$groupname = !empty($group['name']) ? Q($group['name']) : Q($gid);
 
 					// shorten the address book name to a given length
-					if ($maxlength && $maxlength > 1) {
-						$gname = abbreviate_string($groupname, $maxlength);
+					if ($maxlength_grp && $maxlength_grp > 1) {
+						$gname = abbreviate_string($groupname, $maxlength_grp);
 
 						if ($gname != $groupname)
 							$title = $groupname;
@@ -269,13 +270,15 @@ class contextmenu extends rcube_plugin
 					}
 
 					if ($source['readonly'])
-						$out .= html::tag('li', array('class' => 'contactgroup disabled'), html::a(array('href' => $command, 'id' => 'rcm_contextgrps_'. JQ($id), 'onclick' => "rcm_set_dest_book('" . JQ($id) ."')", 'class' => 'active', 'title' => $title), Q($groupname)));
+						$out .= html::tag('li', array('class' => 'contactgroup disabled'), html::a(array('href' => $command, 'id' => 'rcm_contextgrps_'. JQ($gid), 'onclick' => "rcm_set_dest_book('" . JQ($gid) . "', '" . JQ($id) . "', '" . JQ($group['ID']) ."')", 'class' => 'active', 'title' => $title), Q('&nbsp;&nbsp;' . $groupname)));
 					else
-						$out .= html::tag('li', array('class' => 'contactgroup'), html::a(array('href' => $command, 'id' => 'rcm_contextgrps_'. JQ($id), 'onclick' => "rcm_set_dest_book('" . JQ($id) ."')", 'class' => 'active', 'title' => $title), Q($groupname)));
+						$out .= html::tag('li', array('class' => 'contactgroup'), html::a(array('href' => $command, 'id' => 'rcm_contextgrps_'. JQ($gid), 'onclick' => "rcm_set_dest_book('" . JQ($gid) . "', '" . JQ($id) . "', '" . JQ($group['ID']) ."')", 'class' => 'active', 'title' => $title), Q('&nbsp;&nbsp;' . $groupname)));
 
 					$groupTotal++;
 				}
 			}
+
+			$groupTotal++;
 		}
 
 		if ($groupTotal > 5) {
@@ -289,7 +292,6 @@ class contextmenu extends rcube_plugin
 
 		return $out;
 	}
-
 }
 
 ?>

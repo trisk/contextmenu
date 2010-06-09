@@ -1,5 +1,17 @@
-Roundcube Webmail Context Menu
-==============================
+Roundcube Webmail ContextMenu
+=============================
+
+2010 06 03
+==========
+ * Update contact copying after r3694
+
+2010 05 15
+==========
+ * Update hooks after r3685
+
+2010 05 15
+==========
+ * Update after r3614
 
 2010 04 13
 ==========
